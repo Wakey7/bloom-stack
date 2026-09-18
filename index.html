@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#171411">
+    <meta name="description" content="晴空叠阵：以落块消除驱动冒险战斗的浏览器游戏原型。">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; frame-src 'none'">
+    <title>晴空叠阵 · Bloom Stack</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="晴空叠阵首页">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span><b>BLOOM</b><em>STACK</em></span>
+        </a>
+        <div class="topbar-actions">
+          <label class="encounter-picker">关卡
+            <select id="encounter-select" aria-label="选择测试关卡">
+              <option value="cairn-pass">01 石冢守卫</option>
+              <option value="veil-grotto">02 帷幕蛾</option>
+              <option value="comet-causeway">03 彗星猎犬</option>
+              <option value="narrow-observatory">04 窄视观测者</option>
+              <option value="fault-sanctum">05 断层巨像</option>
+            </select>
+          </label>
+          <button id="sound-button" class="text-button" type="button" aria-pressed="false">声音：开</button>
+          <button id="pause-button" class="text-button" type="button">暂停</button>
+        </div>
+      </header>
+
+      <section class="game-layout" aria-label="游戏区域">
+        <aside class="side-rail left-rail" aria-label="玩家信息">
+          <section class="glass-card hold-card">
+            <div class="card-heading"><span>RESERVE</span><small id="hold-status">C</small></div>
+            <canvas id="hold-canvas" class="mini-canvas" aria-label="暂存方块"></canvas>
+          </section>
+
+          <section class="glass-card telemetry-card">
+            <span class="micro-label">ENCOUNTER</span>
+            <dl class="stats">
+              <div><dt>造成伤害</dt><dd id="battle-damage">0</dd></div>
+              <div><dt>已落方块</dt><dd id="pieces-used">0</dd></div>
+              <div><dt>消除</dt><dd id="lines">00</dd></div>
+            </dl>
+          </section>
+
+          <section class="glass-card skill-card">
+            <div class="card-heading"><span>WARD</span><small>V</small></div>
+            <button id="ward-button" class="skill-button" type="button" data-action="ward">
+              <span>护符屏障</span>
+              <b id="focus-value">3 / 6</b>
+              <small id="ward-detail">消耗 3 专注，抵消下一次技能</small>
+            </button>
+          </section>
+        </aside>
+
+        <section class="board-column">
+          <div class="event-strip" aria-live="polite">
+            <div class="event-copy">
+              <span id="event-label">READY</span>
+              <small id="event-detail">Press start</small>
+            </div>
+            <div id="intent-warning" class="intent-warning">
+              <span>技能预警</span>
+              <b id="board-intent-name">落石雨</b>
+              <strong id="board-intent-countdown">4 块后</strong>
+            </div>
+          </div>
+          <div class="board-frame">
+            <canvas id="board" aria-label="10列18行的战斗场地"></canvas>
+            <div id="effect-badges" class="effect-badges" aria-live="polite"></div>
+            <div id="overlay" class="game-overlay">
+              <span id="overlay-eyebrow">THE ROAD OPENS</span>
+              <h1 id="overlay-title">晴空叠阵</h1>
+              <p id="overlay-text">穿过山隘，以消除开路。</p>
+              <button id="start-button" class="primary-button" type="button">开始游戏</button>
+            </div>
+          </div>
+          <div class="keyboard-hint"><kbd>←</kbd><kbd>→</kbd> 移动 <kbd>↑</kbd> 旋转 <kbd>V</kbd> 护符 <kbd>Space</kbd> 硬降</div>
+        </section>
+
+        <aside class="side-rail right-rail" aria-label="怪物与预览信息">
+          <section id="battle-stage" class="battle-stage" aria-label="战斗状态">
+            <div class="battle-actor hero-actor">
+              <div class="actor-token hero-token" role="img" aria-label="旅行绘图师占位剪影">
+                <span class="hero-head"></span>
+                <span class="hero-cloak"></span>
+                <span class="hero-staff"></span>
+              </div>
+              <div class="actor-status">
+                <span>WAYFINDER</span>
+                <small id="ward-state">护符待命</small>
+              </div>
+            </div>
+            <div class="enemy-intent" aria-live="polite">
+              <span>WARDEN INTENT</span>
+              <b id="intent-name">落石雨</b>
+              <small id="intent-countdown">4 个方块后 · 2 / 5 / 8 列</small>
+            </div>
+            <div class="battle-actor enemy-actor">
+              <div class="actor-token warden-token" role="img" aria-label="石冢守卫占位剪影">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <div class="actor-status">
+                <span id="enemy-name">CAIRN WARDEN</span>
+                <div class="health-track enemy-health"><i id="enemy-health"></i></div>
+                <small id="enemy-health-text">90 / 90</small>
+              </div>
+            </div>
+            <output id="damage-pop" class="damage-pop" aria-live="polite"></output>
+          </section>
+          <section class="glass-card next-card">
+            <div class="card-heading"><span>NEXT</span><small>QUEUE</small></div>
+            <canvas id="next-canvas" class="next-canvas" aria-label="后续方块"></canvas>
+          </section>
+
+          <section class="glass-card control-card">
+            <span class="micro-label">CONTROLS</span>
+            <ul>
+              <li><span>移动</span><b>方向键</b></li>
+              <li><span>旋转</span><b>Z / X</b></li>
+              <li><span>暂存</span><b>C</b></li>
+              <li><span>护符</span><b>V</b></li>
+              <li><span>硬降</span><b>空格</b></li>
+              <li><span>暂停</span><b>P</b></li>
+            </ul>
+          </section>
+        </aside>
+
+        <div id="row-attack-layer" class="row-attack-layer" aria-hidden="true"></div>
+      </section>
+
+      <section class="touch-controls" aria-label="触控操作">
+        <button type="button" data-action="hold">暂存</button>
+        <button type="button" data-action="ward">护符</button>
+        <button type="button" data-action="rotate-left">↶</button>
+        <button type="button" data-action="left">←</button>
+        <button type="button" data-action="down">↓</button>
+        <button type="button" data-action="right">→</button>
+        <button type="button" data-action="rotate-right">↷</button>
+        <button class="drop-button" type="button" data-action="drop">硬降</button>
+      </section>
+
+      <footer><span>VERSION 0.1.0 · RELEASE</span><span>独立关卡 · 技能预警 · 温和地震</span></footer>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

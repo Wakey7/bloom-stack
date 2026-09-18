@@ -1,0 +1,30 @@
+{
+  "name": "bloom-stack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "productName": "晴空叠阵 · Bloom Stack",
+  "author": "Bloom Stack Contributors",
+  "description": "A dependency-free browser falling-block adventure and battle prototype.",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "start:desktop": "electron-forge start",
+    "smoke:desktop": "electron . --smoke-test",
+    "package:desktop": "electron-forge package --platform=win32 --arch=x64",
+    "make:desktop": "electron-forge make --platform=win32 --arch=x64",
+    "test": "node --test",
+    "simulate:battle": "node scripts/simulate-battle.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "7.11.2",
+    "@electron-forge/maker-squirrel": "7.11.2",
+    "electron": "44.4.1"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "1.0.1"
+  }
+}
